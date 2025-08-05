@@ -1,0 +1,102 @@
+#include <ArduinoIoTCloud.h>
+#include <Arduino_ConnectionHandler.h>
+#include <ESP32Servo.h>
+
+// Device credentials
+const char DEVICE_LOGIN_NAME[] = "84b28c36-ac86-4483-9e9e-a7d827ec35c4";
+const char DEVICE_KEY[]        = "zm2dlYST05yHSE1ewny8kPi7z";
+const char SSID[]              = "Tenda_Extender";
+const char PASS[]              = "DEBJIT@2003th";
+
+// Cloud variables
+CloudLight doorlock;
+bool motionDetected;
+
+// Pins
+#define SERVO_PIN 13
+#define PIR_PIN   12
+#define wifiLed   2
+
+// Servo lock angles
+#define LOCK_POS     0
+#define UNLOCK_POS   90
+
+Servo doorServo;
+bool lastMotionState = false;
+
+// ======== Cloud callbacks =========
+void onDoorlockChange() {
+  Serial.println("🔄 Received cloud command to change door lock state...");
+
+  if (doorlock) {
+    doorServo.write(LOCK_POS);
+    Serial.println("🔒 Door LOCKED via Alexa — Servo moving to LOCK position (0°)");
+  } else {
+    doorServo.write(UNLOCK_POS);
+    Serial.println("🔓 Door UNLOCKED via Alexa — Servo moving to UNLOCK position (90°)");
+  }
+}
+
+void initProperties() {
+  ArduinoCloud.setBoardId(DEVICE_LOGIN_NAME);
+  ArduinoCloud.setSecretDeviceKey(DEVICE_KEY);
+
+  ArduinoCloud.addProperty(doorlock, READWRITE, ON_CHANGE, onDoorlockChange);
+  ArduinoCloud.addProperty(motionDetected, READ, ON_CHANGE, NULL);
+}
+
+// WiFi handler
+WiFiConnectionHandler ArduinoIoTPreferredConnection(SSID, PASS);
+
+// Optional: LED indicators
+void doThisOnConnect() {
+  Serial.println("✅ Connected to Arduino IoT Cloud");
+  digitalWrite(wifiLed, HIGH);
+}
+void doThisOnSync() {
+  Serial.println("🔁 Cloud properties synced");
+}
+void doThisOnDisconnect() {
+  Serial.println("❌ Disconnected from Arduino IoT Cloud");
+  digitalWrite(wifiLed, LOW);
+}
+
+void setup() {
+  Serial.begin(9600);
+  delay(1500);
+
+  pinMode(PIR_PIN, INPUT);
+  pinMode(wifiLed, OUTPUT);
+
+  doorServo.attach(SERVO_PIN);
+  doorServo.write(UNLOCK_POS); // Default: unlocked
+
+  initProperties();
+  ArduinoCloud.begin(ArduinoIoTPreferredConnection);
+
+  ArduinoCloud.addCallback(ArduinoIoTCloudEvent::CONNECT, doThisOnConnect);
+  ArduinoCloud.addCallback(ArduinoIoTCloudEvent::SYNC, doThisOnSync);
+  ArduinoCloud.addCallback(ArduinoIoTCloudEvent::DISCONNECT, doThisOnDisconnect);
+
+  setDebugMessageLevel(2);
+  ArduinoCloud.printDebugInfo();
+
+  Serial.println("🚀 System Initialized. Waiting for commands...");
+}
+
+void loop() {
+  ArduinoCloud.update();
+
+  // PIR sensor detection
+  bool motionNow = digitalRead(PIR_PIN);
+  if (motionNow != lastMotionState) {
+    lastMotionState = motionNow;
+    motionDetected = motionNow;
+
+    if (motionNow) {
+      Serial.println("⚠️ Motion detected in front of the door!");
+    } else {
+      Serial.println("✅ Motion stopped.");
+    }
+  }
+}
