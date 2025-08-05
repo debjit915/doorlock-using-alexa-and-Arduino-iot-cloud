@@ -1,0 +1,67 @@
+🔐 ESP32 Smart Door Lock with Alexa and Motion Detection
+This project integrates an ESP32, a servo motor, and a PIR motion sensor to create a smart door locking system that can be controlled via Alexa (Arduino IoT Cloud) and also responds to motion automatically.
+
+When motion is detected (someone comes near the door), the servo unlocks the door automatically. You can also control the lock manually using the Alexa app or voice assistant.
+
+🚀 Features
+✅ Alexa voice control via Arduino IoT Cloud
+
+✅ Auto door unlock on motion detection
+
+✅ Real-time status updates
+
+✅ Servo motor-based door locking
+
+✅ Serial monitoring for debugging and status
+
+🧰 Components Used
+Component	Description
+ESP32 Dev Board	Main controller
+Servo Motor	Door lock/unlock mechanism
+PIR Sensor	Motion detection
+Arduino IoT Cloud	Alexa integration & remote control
+Jumper Wires	For connections
+Power Supply	5V for servo
+
+🔌 Circuit Diagram
+Servo Motor
+
+Signal → GPIO 5
+
+VCC → 5V
+
+GND → GND
+
+PIR Sensor
+
+OUT → GPIO 13
+
+VCC → 5V
+
+GND → GND
+
+ESP32 to Arduino IoT Cloud
+
+Connected via sketch and configured with a Thing containing a doorLock variable (type: CloudSwitch).
+
+🛠️ Installation
+Install the following libraries in Arduino IDE:
+
+ArduinoIoTCloud
+
+Arduino_ConnectionHandler
+
+ESP32Servo
+
+Set up your Thing in Arduino IoT Cloud.
+
+Create a variable:
+
+Name: doorLock
+
+Type: CloudSwitch
+
+Sync with Alexa: ✅
+
+Flash the code provided below to your ESP32.
+
